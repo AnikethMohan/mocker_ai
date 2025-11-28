@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "590228057164",
+    "project_id": "mocker-ai-52505",
+    "storage_bucket": "mocker-ai-52505.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:590228057164:android:c1f97f83cc60a7d09b58e9",
+        "android_client_info": {
+          "package_name": "com.example.mocker_ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCceLQ3f14qfogjCerW0koVfAnUmKUX5i8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
