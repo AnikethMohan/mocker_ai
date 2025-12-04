@@ -4,6 +4,8 @@
 
 import 'dart:convert';
 
+import 'package:mocker_ai/app/UploadResumePage/model/job_analysis_data.dart';
+
 ResumeResult resumeResultFromJson(String str) =>
     ResumeResult.fromJson(json.decode(str));
 
@@ -15,6 +17,7 @@ class ResumeResult {
   List<Experience>? experience;
   List<Education>? education;
   List<String>? skills;
+  JobAnalysisResult? jobAnalysisResult;
 
   ResumeResult({
     this.name,
@@ -22,6 +25,7 @@ class ResumeResult {
     this.experience,
     this.education,
     this.skills,
+    this.jobAnalysisResult,
   });
 
   factory ResumeResult.fromJson(Map<String, dynamic> json) => ResumeResult(
@@ -42,6 +46,9 @@ class ResumeResult {
     skills: json["skills"] == null
         ? []
         : List<String>.from(json["skills"]!.map((x) => x)),
+    jobAnalysisResult: json["jobAnalysis"] == null
+        ? null
+        : JobAnalysisResult.fromJson(json["jobAnalysis"]),
   );
 
   Map<String, dynamic> toJson() => {
@@ -54,6 +61,7 @@ class ResumeResult {
         ? []
         : List<dynamic>.from(education!.map((x) => x.toJson())),
     "skills": skills == null ? [] : List<dynamic>.from(skills!.map((x) => x)),
+    "jobAnalysis": jobAnalysisResult?.toJson(),
   };
 }
 
