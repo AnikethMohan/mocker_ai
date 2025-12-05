@@ -2,9 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
 import 'package:get/instance_manager.dart';
-import 'package:get/route_manager.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocker_ai/Common/Theme/app_colors.dart';
 import 'package:mocker_ai/app/UploadResumePage/controller/resume_controller.dart';
+import 'package:mocker_ai/routes/routes_name.dart';
 
 class JobDescriptionWidget extends StatefulWidget {
   const JobDescriptionWidget({super.key});
@@ -208,8 +209,38 @@ class _JobDescriptionWidgetState extends State<JobDescriptionWidget> {
                         ],
                       ),
                       Text('Tip: ${_sc.jobAnalysisResultData.value?.tip}'),
+                      SizedBox(height: 10),
+                      InkWell(
+                        onTap: () {
+                          GoRouter.of(
+                            context,
+                          ).push(RoutesName.aiVoiceInterview);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryBlue,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Start Interview',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    context.go(RoutesName.aiVoiceInterview);
+                  },
+                  child: Text('Start interview'),
                 ),
               ],
             ],
