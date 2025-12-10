@@ -3,31 +3,39 @@ import 'dart:developer';
 
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:get/get.dart';
 import 'package:mocker_ai/Common/GeminiModels/gemini_model_names.dart';
+import 'package:mocker_ai/app/AIVoiceInterViewScreen/model/interview_context.dart';
+import 'package:mocker_ai/app/AIVoiceInterViewScreen/model/interview_response.dart';
 import 'package:mocker_ai/app/UploadResumePage/controller/resume_controller.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'dart:html';
 
 enum InterviewState {
   idle,
   initializing,
   speaking,
   listening,
+  finshedSpeaking,
   typing, // New state for web
   processing,
   finished,
 }
 
 class InterviewController extends GetxController {
+  static const String interviewerName = 'Aniketh';
   final FlutterTts flutterTts = FlutterTts();
   final SpeechToText speechToText = SpeechToText();
 
   final Rx<InterviewState> state = InterviewState.idle.obs;
   final RxList<String> conversationHistory = <String>[].obs;
+  final interviewResponse = Rxn<InterviewResponse>();
 
   final ResumeController _resumeController = Get.find<ResumeController>();
+  final InterviewMemory memory = InterviewMemory();
+  var isInterViewFinished = false.obs;
+  ScrollController scrollController = ScrollController();
 
   @override
   void onInit() {
@@ -44,13 +52,33 @@ class InterviewController extends GetxController {
   }
 
   Future<void> _initStt() async {
-    await speechToText.initialize();
+    await speechToText.initialize(
+      onStatus: (val) {
+        if (val == 'notListening') {
+          speechToText.stop();
+        }
+      },
+      onError: (val) {
+        if (val.errorMsg == 'notListening') {
+          speechToText.stop();
+        }
+      },
+    );
+  }
+
+  scrollDown() {
+    scrollController.animateTo(
+      scrollController.position.maxScrollExtent,
+      duration: Duration(milliseconds: 500), // Adjust duration as needed
+      curve: Curves.ease, // Choose an appropriate curve
+    );
   }
 
   Future<void> startInterview() async {
     state.value = InterviewState.initializing;
     final initialQuestion = await _generateInitialQuestion();
     conversationHistory.add("AI: $initialQuestion");
+    memory.askedQuestions.add(initialQuestion);
     await _speak(initialQuestion);
   }
 
@@ -61,15 +89,34 @@ class InterviewController extends GetxController {
 
     final prompt = [
       Content.text('''
-    You are a friendly and professional interviewer. Your goal is to conduct a technical interview based on the candidate's resume and the job description.
+          You are an AI interviewer. Below is the candidate’s information:
 
-    Start by introducing yourself and then ask the first question. The question should be based on the candidate's experience or skills mentioned in their resume, in relation to the job description.
+          **Resume Details (JSON):**
+          ${jsonEncode(_resumeController.resumeResultData.value!.toJson())}
 
-    Resume details:
-    ${jsonEncode(_resumeController.resumeResultData.value!.toJson())}
+          **Job Description (JSON):**
+          ${jsonEncode(_resumeController.jobAnalysisResultData.value?.toJson())}
 
-    Job Description:
-    ${_resumeController.jobDescriptionController.text}
+          Your role:
+          - You are a friendly, professional interviewer named "$interviewerName"
+          - You must conduct an interview tailored to the candidate's resume and the job description.
+          - Begin with a short, warm introduction about who you are.
+          - Then ask **one strong first interview question**.
+          - The question must:
+            • Be relevant to the job description  
+            • Reference the candidate’s experience or skills from the resume  
+            • Be specific, not generic  
+            • Encourage detailed responses (avoid yes/no questions)
+
+          Speech Style:
+          - Your question must sound like natural, conversational spoken language.
+          - Keep sentences clear, warm, and human-like—not robotic or overly formal..//
+          - Use natural phrasing, slight pauses, and tone that feels like real speech.
+          - Avoid long, complex sentences. Make  it sound like something a real interviewerwould say aloud.
+
+          Format your output as:
+          1. A brief introduction (1-2 sentences).
+          2. A single interview question.
     '''),
     ];
 
@@ -82,10 +129,11 @@ class InterviewController extends GetxController {
     state.value = InterviewState.speaking;
     await flutterTts.speak(text);
     flutterTts.setCompletionHandler(() {
-      window.navigator.getUserMedia(audio: true).then((value) {
-        log('$value');
-      });
-      _listen();
+      // window.navigator.getUserMedia(audio: true).then((value) {
+      //   log('$value');
+      // });
+      state.value = InterviewState.finshedSpeaking;
+      //_listen();
       // if (kIsWeb) {
       //   state.value = InterviewState.typing;
       // } else {
@@ -94,11 +142,11 @@ class InterviewController extends GetxController {
     });
   }
 
-  void _listen() {
+  void listen() {
     state.value = InterviewState.listening;
     speechToText.listen(
       onResult: (result) {
-        log('${result.recognizedWords}');
+        log(result.recognizedWords);
         log('${result.finalResult}');
         if (result.finalResult) {
           processAnswer(result.recognizedWords);
@@ -110,35 +158,91 @@ class InterviewController extends GetxController {
   Future<void> processAnswer(String answer) async {
     state.value = InterviewState.processing;
     conversationHistory.add("You: $answer");
+    scrollDown();
+    memory.userResponses.add(answer);
+
     final nextQuestion = await _generateNextQuestion();
-    conversationHistory.add("AI: $nextQuestion");
-    await _speak(nextQuestion);
+
+    conversationHistory.add("AI: ${nextQuestion.response}");
+    scrollDown();
+    memory.askedQuestions.add(nextQuestion.response ?? '');
+    await _speak(nextQuestion.response ?? "Sorry, I didn't get that.");
+    if (nextQuestion.isInterviewFinished ?? false) {
+      isInterViewFinished.value = true;
+      return;
+    }
   }
 
-  Future<String> _generateNextQuestion() async {
+  Future<InterviewResponse> _generateNextQuestion() async {
+    final interviewSchema = Schema.object(
+      properties: {
+        'response': Schema.string(
+          description:
+              "The interviewer's next question or concluding statement.",
+        ),
+        'isInterviewFinished': Schema.boolean(
+          description:
+              "Set to true only when the interview should definitively end.",
+        ),
+      },
+      optionalProperties: ['response', 'isInterviewFinished'],
+    );
+
     final model = FirebaseAI.googleAI().generativeModel(
       model: GeminiModels.gem25Flash,
+      generationConfig: GenerationConfig(
+        responseMimeType: 'application/json',
+        responseSchema: interviewSchema,
+      ),
     );
 
     final prompt = [
-      Content.text('''
-    You are a friendly and professional interviewer. Here is the conversation history so far:
-    ${conversationHistory.join('\n')}
+      Content.text(''' Resume details:
+    ${jsonEncode(_resumeController.resumeResultData.value!.toJson())}
 
-    Based on the conversation, ask the next logical and relevant question. Keep the conversation flowing naturally.
+    Job Description:
+    ${_resumeController.jobDescriptionController.text}
+
+    Interview Memory:
+    ${jsonEncode(memory.toJson())}
     '''),
+      Content.text('''
+        You are a friendly, professional interviewer named "$interviewerName".
+
+        Here is the conversation so far:
+        ${memory.toJson()}
+
+                Your task:
+                - Identify what topics have already been discussed.
+                - Do NOT repeat questions or stay on the same topic unless clarification is needed.
+                - Progress the interview naturally by moving to a new relevant topic based on the resume and job description.
+                - Cover a variety of areas: experience, technical skills, soft skills, problem-solving, teamwork, leadership, tools/tech stack, culture fit, career goals, etc.
+                - Keep the conversation flowing with natural forward momentum.
+                - After covering the main topics, provide a concluding statement and set "isInterviewFinished" to true.
+                - Ask **only ONE** next question unless you are concluding the interview.
+
+                Speech Style:
+                - Your response must sound like natural, conversational spoken language.
+                - Keep sentences clear, warm, and human-like—not robotic or overly formal.
+                - Use natural phrasing, slight pauses, and tone that feels like real speech.
+                - Avoid long, complex sentences. Make it sound like something a real interviewer would say aloud.
+
+                Output Requirements:
+                - Output a valid JSON object matching the provided schema.
+                - The 'response' field should contain your spoken words.
+                - The 'isInterviewFinished' field must be a boolean.
+      '''),
     ];
 
     final response = await model.generateContent(prompt);
-    return response.text ?? "That's interesting. Can you tell me more?";
+    final json = jsonDecode(response.text!);
+    log('$json');
+    return InterviewResponse.fromJson(json);
   }
 
   void endInterview() {
     state.value = InterviewState.finished;
     flutterTts.stop();
     speechToText.stop();
-    if (!kIsWeb) {
-      speechToText.stop();
-    }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mocker_ai/Common/Theme/app_colors.dart';
 
 class ChatBubble extends StatelessWidget {
   final String message;
@@ -9,8 +10,14 @@ class ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10.0),
+      margin: EdgeInsets.only(
+        top: 10.0,
+        bottom: 10,
+        right: isUser ? 0 : 30,
+        left: isUser ? 30 : 0,
+      ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: isUser
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
@@ -22,8 +29,9 @@ class ChatBubble extends StatelessWidget {
                 vertical: 10.0,
               ),
               decoration: BoxDecoration(
-                color: isUser ? Colors.blue : Colors.grey[300],
+                color: isUser ? AppColors.primaryBlue : Colors.white,
                 borderRadius: BorderRadius.circular(20.0),
+                border: Border.all(color: AppColors.grey),
               ),
               child: Text(
                 message,

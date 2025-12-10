@@ -66,44 +66,42 @@ class ResumeController extends GetxController {
 
   Future<String> _getUsableJsonFromText(String resume) async {
     final model = FirebaseAI.googleAI().generativeModel(
-      model: GeminiModels.gem25Flash,
+      model: GeminiModels.gem25Lite,
     );
 
     // Provide a prompt that contains text
     final prompt = [
       Content.text('''
-You are a resume parser. Extract the following information from the provided resume and return it as a JSON object. Ensure the output is *only* the JSON. If a field is not found, use null or an empty array as appropriate.
+              You are a resume parser. Extract the following information from the provided resume and return it as a JSON object. Ensure the output is *only* the JSON. If a field is not found, use null or an empty array as appropriate.
 
-JSON Schema:
-```json
-{
-  "name": "string",
-  "contactInfo": {
-    "email": "string",
-    "phone": "string",
-    "linkedin": "string"
-  },
-  "experience": [
-    {
-      "title": "string",
-      "company": "string",
-      "startDate": "string",
-      "endDate": "string",
-      "description": "string"
-    }
-  ],
-  "education": [
-    {
-      "degree": "string",
-      "university": "string",
-      "graduationYear": "number"
-    }
-  ],
-  "skills": ["string"]
-}
-
-
-'''),
+              JSON Schema:
+              ```json
+              {
+                "name": "string",
+                "contactInfo": {
+                  "email": "string",
+                  "phone": "string",
+                  "linkedin": "string"
+                },
+                "experience": [
+                  {
+                    "title": "string",
+                    "company": "string",
+                    "startDate": "string",
+                    "endDate": "string",
+                    "description": "string"
+                  }
+                ],
+                "education": [
+                  {
+                    "degree": "string",
+                    "university": "string",
+                    "graduationYear": "number"
+                  }
+                ],
+                "skills": ["string"]
+              }
+       '''),
       Content.text(resume),
     ];
 
@@ -157,19 +155,19 @@ JSON Schema:
 
       final prompt = [
         Content.text('''
-You are an expert HR analyst. Analyze the provided resume and job description.
-Extract the target role and key required skills from the job description.
-Then, compare the resume's skills and experience against these required skills.
-Finally, provide a resume match score as a percentage (0-100) indicating how well the resume matches the job description and also provide a tip or a small analysis .
+              You are an expert HR analyst. Analyze the provided resume and job description.
+              Extract the target role and key required skills from the job description.
+              Then, compare the resume's skills and experience against these required skills.
+              Finally, provide a resume match score as a percentage (0-100) indicating how well the resume matches the job description and also provide a tip or a small analysis .
 
-Ensure the output is *only* the JSON. If a field is not found, use null or an empty array as appropriate.
+              Ensure the output is *only* the JSON. If a field is not found, use null or an empty array as appropriate.
 
-Resume details (extracted JSON):
-${jsonEncode(resumeResultData.value!.toJson())}
+              Resume details (extracted JSON):
+              ${jsonEncode(resumeResultData.value!.toJson())}
 
-Job Description:
-${jobDescriptionController.text}
-'''),
+              Job Description:
+              ${jobDescriptionController.text}
+      '''),
       ];
 
       final response = await model.generateContent(prompt);

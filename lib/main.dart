@@ -5,6 +5,7 @@ import 'package:mocker_ai/firebase_options.dart';
 import 'package:mocker_ai/routes/routes_pages.dart';
 
 Future main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }

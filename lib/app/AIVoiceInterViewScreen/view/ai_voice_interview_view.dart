@@ -18,6 +18,12 @@ class _AIVoiceInterViewScreenState extends State<AIVoiceInterViewScreen> {
   final TextEditingController _textController = TextEditingController();
 
   @override
+  void initState() {
+    controller.startInterview();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xffFDFEFF),
@@ -44,19 +50,64 @@ class _AIVoiceInterViewScreenState extends State<AIVoiceInterViewScreen> {
         children: [
           Expanded(
             child: Obx(() {
-              return ListView.builder(
-                itemCount: controller.conversationHistory.length,
-                padding: EdgeInsets.only(bottom: 100),
-                itemBuilder: (context, index) {
-                  final message = controller.conversationHistory[index];
-                  final isUser = message.startsWith("You:");
-                  return ChatBubble(
-                    message: isUser
-                        ? message.substring(4)
-                        : message.substring(3),
-                    isUser: isUser,
-                  );
-                },
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: ListView.builder(
+                  itemCount: controller.conversationHistory.length,
+                  controller: controller.scrollController,
+                  padding: EdgeInsets.only(bottom: 100),
+                  itemBuilder: (context, index) {
+                    final message = controller.conversationHistory[index];
+                    final isUser = message.startsWith("You:");
+                    return Column(
+                      children: [
+                        ChatBubble(
+                          message: isUser
+                              ? message.substring(4)
+                              : message.substring(3),
+                          isUser: isUser,
+                        ),
+                        if (index ==
+                                controller.conversationHistory.length - 1 &&
+                            controller.state.value ==
+                                InterviewState.processing) ...[
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 15.0,
+                                vertical: 10.0,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20.0),
+                                border: Border.all(color: AppColors.grey),
+                              ),
+                              child: Row(
+                                spacing: 10,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.primaryBlue,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Ai is thinking',
+                                    style: TextStyle(color: Colors.black),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    );
+                  },
+                ),
               );
             }),
           ),
@@ -81,7 +132,14 @@ class _AIVoiceInterViewScreenState extends State<AIVoiceInterViewScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                onPressed: () {},
+                onPressed: () {
+                  if (controller.state.value ==
+                      InterviewState.finshedSpeaking) {
+                    controller.listen();
+                  } else {
+                    controller.speechToText.stop();
+                  }
+                },
                 icon: AnimatedContainer(
                   duration: Duration(milliseconds: 100),
                   height: 80,
@@ -114,8 +172,10 @@ class _AIVoiceInterViewScreenState extends State<AIVoiceInterViewScreen> {
                         Text('Please wait', style: TextStyle(fontSize: 12)),
                       ],
                     )
-                  : controller.state.value == InterviewState.idle
-                  ? Text('Click the microphone to start')
+                  : controller.state.value == InterviewState.finshedSpeaking
+                  ? Text('Click the microphone to speak')
+                  : controller.state.value == InterviewState.listening
+                  ? Text('Click the button after you have finished speaking')
                   : SizedBox(),
             ],
           ),
@@ -165,6 +225,8 @@ class _AIVoiceInterViewScreenState extends State<AIVoiceInterViewScreen> {
         return "Press play to start the interview.";
       case InterviewState.initializing:
         return "Initializing...";
+      case InterviewState.finshedSpeaking:
+        return 'Click microphone to speak';
       case InterviewState.speaking:
         return "AI is speaking...";
       case InterviewState.listening:
