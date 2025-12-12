@@ -10,6 +10,8 @@ import 'package:mocker_ai/Common/GeminiModels/gemini_model_names.dart';
 import 'package:mocker_ai/app/AIVoiceInterViewScreen/model/interview_context.dart';
 import 'package:mocker_ai/app/AIVoiceInterViewScreen/model/interview_response.dart';
 import 'package:mocker_ai/app/UploadResumePage/controller/resume_controller.dart';
+import 'package:mocker_ai/routes/routes_name.dart';
+import 'package:mocker_ai/routes/routes_pages.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 enum InterviewState {
@@ -255,5 +257,8 @@ class InterviewController extends GetxController {
     state.value = InterviewState.finished;
     flutterTts.stop();
     speechToText.stop();
+    Future.delayed(Duration(milliseconds: 300), () {
+      appRouter.push(RoutesName.aiInterviewFeedback);
+    });
   }
 }

@@ -62,7 +62,7 @@ class _UploadResumeMobileScaffoldState
                 if (_sc.fileName.value.isEmpty) ...[
                   _steps(size, 1),
                   SizedBox(height: 40),
-                  _uploadResumeContainer(),
+                  Center(child: _uploadResumeContainer()),
                 ] else if (!isResumeParsingCompleted) ...[
                   _steps(size, _sc.resumeResultData.value != null ? 2 : 1),
                   SizedBox(height: 40),

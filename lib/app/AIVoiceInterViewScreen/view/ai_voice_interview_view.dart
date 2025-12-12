@@ -50,6 +50,7 @@ class _AIVoiceInterViewScreenState extends State<AIVoiceInterViewScreen> {
         children: [
           Expanded(
             child: Obx(() {
+              controller.scrollDown();
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: ListView.builder(
