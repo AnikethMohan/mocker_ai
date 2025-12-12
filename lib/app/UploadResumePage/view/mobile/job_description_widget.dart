@@ -236,12 +236,6 @@ class _JobDescriptionWidgetState extends State<JobDescriptionWidget> {
                     ],
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    context.go(RoutesName.aiVoiceInterview);
-                  },
-                  child: Text('Start interview'),
-                ),
               ],
             ],
           ),

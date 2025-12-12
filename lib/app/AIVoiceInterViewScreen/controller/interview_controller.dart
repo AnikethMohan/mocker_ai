@@ -24,7 +24,7 @@ enum InterviewState {
 }
 
 class InterviewController extends GetxController {
-  static const String interviewerName = 'Aniketh';
+  static const String interviewerName = 'John';
   final FlutterTts flutterTts = FlutterTts();
   final SpeechToText speechToText = SpeechToText();
 
@@ -125,7 +125,7 @@ class InterviewController extends GetxController {
         "I'm sorry, I couldn't generate a question. Could you please tell me about yourself?";
   }
 
-  Future<void> _speak(String text) async {
+  Future<void> _speak(String text, {VoidCallback? onComplete}) async {
     state.value = InterviewState.speaking;
     await flutterTts.speak(text);
     flutterTts.setCompletionHandler(() {
@@ -133,6 +133,9 @@ class InterviewController extends GetxController {
       //   log('$value');
       // });
       state.value = InterviewState.finshedSpeaking;
+      if (onComplete != null) {
+        onComplete();
+      }
       //_listen();
       // if (kIsWeb) {
       //   state.value = InterviewState.typing;
@@ -166,11 +169,15 @@ class InterviewController extends GetxController {
     conversationHistory.add("AI: ${nextQuestion.response}");
     scrollDown();
     memory.askedQuestions.add(nextQuestion.response ?? '');
-    await _speak(nextQuestion.response ?? "Sorry, I didn't get that.");
+
     if (nextQuestion.isInterviewFinished ?? false) {
-      isInterViewFinished.value = true;
+      await _speak(
+        nextQuestion.response ?? "Thank you for your time.",
+        onComplete: () {},
+      );
       return;
     }
+    await _speak(nextQuestion.response ?? "Sorry, I didn't get that.");
   }
 
   Future<InterviewResponse> _generateNextQuestion() async {
@@ -213,13 +220,17 @@ class InterviewController extends GetxController {
         ${memory.toJson()}
 
                 Your task:
-                - Identify what topics have already been discussed.
-                - Do NOT repeat questions or stay on the same topic unless clarification is needed.
-                - Progress the interview naturally by moving to a new relevant topic based on the resume and job description.
-                - Cover a variety of areas: experience, technical skills, soft skills, problem-solving, teamwork, leadership, tools/tech stack, culture fit, career goals, etc.
-                - Keep the conversation flowing with natural forward momentum.
-                - After covering the main topics, provide a concluding statement and set "isInterviewFinished" to true.
-                - Ask **only ONE** next question unless you are concluding the interview.
+               - Identify what topics have already been discussed.
+              - Do NOT repeat questions or stay on the same topic unless clarification is needed.
+              - Progress the interview naturally by moving to a new relevant topic based on the resume and job description.
+              - Cover a variety of areas: experience, technical skills, soft skills, problem-solving, teamwork, leadership, tools/tech stack, culture fit, career goals, etc.
+              - Keep the conversation flowing with natural forward momentum.
+              - After covering the main topics, provide a concluding statement and set "isInterviewFinished" to true.
+              - When you decide the interview is finished, your final spoken response MUST include a friendly closing line that clearly tells the user: 
+                "This interview is now finished, and you’ll be redirected to your summary screen where you can review your results."
+              - This line should ONLY be said on the final response when `isInterviewFinished` is true.
+              - Ask ONLY ONE next question unless you are concluding the interview.
+
 
                 Speech Style:
                 - Your response must sound like natural, conversational spoken language.
@@ -240,7 +251,7 @@ class InterviewController extends GetxController {
     return InterviewResponse.fromJson(json);
   }
 
-  void endInterview() {
+  void interviewFinshed() {
     state.value = InterviewState.finished;
     flutterTts.stop();
     speechToText.stop();

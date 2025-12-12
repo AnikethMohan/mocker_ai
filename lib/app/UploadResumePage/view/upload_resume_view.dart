@@ -9,7 +9,10 @@ class UploadResumeView extends StatelessWidget {
   Widget build(BuildContext context) {
     return ResponsiveLayout(
       mobileView: UploadResumeMobileScaffold(),
-      desktopView: UploadResumeMobileScaffold(),
+      desktopView: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 500),
+        child: UploadResumeMobileScaffold(),
+      ),
     );
   }
 }

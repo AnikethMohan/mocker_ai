@@ -40,7 +40,7 @@ class _AIVoiceInterViewScreenState extends State<AIVoiceInterViewScreen> {
             } else {
               return IconButton(
                 icon: const Icon(Icons.stop),
-                onPressed: () => controller.endInterview(),
+                onPressed: () => controller.interviewFinshed(),
               );
             }
           }),
