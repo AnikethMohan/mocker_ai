@@ -46,10 +46,13 @@ dependencies:
   permission_handler: ^12.0.1
   universal_html: ^2.3.0
   google_fonts: ^6.3.3
+  flutter_web_plugins:
+    sdk: flutter  
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

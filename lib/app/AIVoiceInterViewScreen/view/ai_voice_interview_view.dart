@@ -50,13 +50,28 @@ class _AIVoiceInterViewScreenState extends State<AIVoiceInterViewScreen> {
         children: [
           Expanded(
             child: Obx(() {
-              controller.scrollDown();
+              if (controller.scrollController.hasClients) {
+                controller.scrollDown();
+              }
+              if (controller.state.value == InterviewState.initializing) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    spacing: 5,
+                    children: [
+                      CircularProgressIndicator(color: AppColors.appBlue),
+                      Text('Setting up your interview'),
+                    ],
+                  ),
+                );
+              }
+
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: ListView.builder(
                   itemCount: controller.conversationHistory.length,
                   controller: controller.scrollController,
-                  padding: EdgeInsets.only(bottom: 100),
+                  padding: EdgeInsets.only(bottom: 120),
                   itemBuilder: (context, index) {
                     final message = controller.conversationHistory[index];
                     final isUser = message.startsWith("You:");
@@ -156,7 +171,9 @@ class _AIVoiceInterViewScreenState extends State<AIVoiceInterViewScreen> {
                   ),
 
                   child: Icon(
-                    CupertinoIcons.mic,
+                    controller.state.value == InterviewState.listening
+                        ? CupertinoIcons.mic
+                        : CupertinoIcons.mic_off,
                     size: 30,
                     color: Colors.white,
                   ),

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ResponsiveLayout extends StatelessWidget {
   final Widget mobileView;
@@ -27,3 +29,17 @@ class ResponsiveLayout extends StatelessWidget {
     );
   }
 }
+
+double get screenWidth {
+  if (isDesktop || isTablet) {
+    return desktopScreenWidth;
+  }
+  return Get.width;
+}
+
+final isDesktop = Get.width > 800;
+
+final double desktopScreenWidth = Get.width * 0.5;
+
+final bool isTablet =
+    !kIsWeb && Get.size.shortestSide >= 600 && Get.size.longestSide <= 1300;

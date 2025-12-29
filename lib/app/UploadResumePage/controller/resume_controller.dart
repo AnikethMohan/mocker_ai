@@ -72,7 +72,7 @@ class ResumeController extends GetxController {
     // Provide a prompt that contains text
     final prompt = [
       Content.text('''
-              You are a resume parser. Extract the following information from the provided resume and return it as a JSON object. Ensure the output is *only* the JSON. If a field is not found, use null or an empty array as appropriate.
+              You are a resume parser. Extract the following information from the provided resume and return it as a JSON object. Ensure the output is *only* the JSON.Try not to repeat any experience or data . If a field is not found, use null or an empty array as appropriate.
 
               JSON Schema:
               ```json

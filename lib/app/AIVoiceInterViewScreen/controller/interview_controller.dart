@@ -26,7 +26,7 @@ enum InterviewState {
 }
 
 class InterviewController extends GetxController {
-  static const String interviewerName = 'John';
+  final String interviewerName = 'John';
   final FlutterTts flutterTts = FlutterTts();
   final SpeechToText speechToText = SpeechToText();
 

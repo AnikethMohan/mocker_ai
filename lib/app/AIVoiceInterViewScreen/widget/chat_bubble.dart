@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mocker_ai/Common/Theme/app_colors.dart';
+import 'package:mocker_ai/app/AIVoiceInterViewScreen/controller/interview_controller.dart';
+import 'package:mocker_ai/app/AIVoiceInterViewScreen/widget/user_avatar.dart';
 
 class ChatBubble extends StatelessWidget {
   final String message;
@@ -21,7 +23,15 @@ class ChatBubble extends StatelessWidget {
         mainAxisAlignment: isUser
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (!isUser) ...[
+            UserAvatar(
+              avatarInitial: InterviewController().interviewerName,
+              gradient: AppColors.profileGradient,
+            ),
+            SizedBox(width: 5),
+          ],
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(
@@ -29,8 +39,13 @@ class ChatBubble extends StatelessWidget {
                 vertical: 10.0,
               ),
               decoration: BoxDecoration(
-                color: isUser ? AppColors.primaryBlue : Colors.white,
-                borderRadius: BorderRadius.circular(20.0),
+                color: isUser ? AppColors.appBlue : AppColors.bubbleGrey,
+                borderRadius: BorderRadius.only(
+                  topLeft: isUser ? Radius.circular(15) : Radius.circular(4),
+                  bottomLeft: Radius.circular(15),
+                  bottomRight: Radius.circular(15),
+                  topRight: isUser ? Radius.circular(4) : Radius.circular(15),
+                ),
                 border: Border.all(color: AppColors.grey),
               ),
               child: Text(
@@ -39,6 +54,10 @@ class ChatBubble extends StatelessWidget {
               ),
             ),
           ),
+          if (isUser) ...[
+            SizedBox(width: 5),
+            UserAvatar(avatarInitial: 'Y', gradient: AppColors.youGradient),
+          ],
         ],
       ),
     );
