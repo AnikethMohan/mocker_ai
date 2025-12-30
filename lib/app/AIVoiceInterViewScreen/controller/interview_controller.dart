@@ -50,7 +50,7 @@ class InterviewController extends GetxController {
   }
 
   Future<void> _initTts() async {
-    // TTS initialization logic
+    await flutterTts.awaitSpeakCompletion(true);
   }
 
   Future<void> _initStt() async {
@@ -81,7 +81,7 @@ class InterviewController extends GetxController {
     final initialQuestion = await _generateInitialQuestion();
     conversationHistory.add("AI: $initialQuestion");
     memory.askedQuestions.add(initialQuestion);
-    await _speak(initialQuestion);
+    await _speak(initialQuestion, onComplete: () {});
   }
 
   Future<String> _generateInitialQuestion() async {
@@ -129,22 +129,16 @@ class InterviewController extends GetxController {
 
   Future<void> _speak(String text, {VoidCallback? onComplete}) async {
     state.value = InterviewState.speaking;
-    await flutterTts.speak(text);
-    flutterTts.setCompletionHandler(() {
-      // window.navigator.getUserMedia(audio: true).then((value) {
-      //   log('$value');
-      // });
+    try {
+      await flutterTts.speak(text);
       state.value = InterviewState.finshedSpeaking;
       if (onComplete != null) {
         onComplete();
       }
-      //_listen();
-      // if (kIsWeb) {
-      //   state.value = InterviewState.typing;
-      // } else {
-      //   _listen();
-      // }
-    });
+    } catch (e) {
+      log('$e');
+      state.value = InterviewState.finshedSpeaking;
+    }
   }
 
   void listen() {
