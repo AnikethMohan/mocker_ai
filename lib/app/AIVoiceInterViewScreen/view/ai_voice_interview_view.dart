@@ -3,8 +3,24 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mocker_ai/Common/Theme/app_colors.dart';
+import 'package:mocker_ai/Common/widgets/responsive_layout.dart';
 import 'package:mocker_ai/app/AIVoiceInterViewScreen/controller/interview_controller.dart';
 import 'package:mocker_ai/app/AIVoiceInterViewScreen/widget/chat_bubble.dart';
+
+class AiVoiceInterviewView extends StatelessWidget {
+  const AiVoiceInterviewView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ResponsiveLayout(
+      mobileView: AIVoiceInterViewScreen(),
+      desktopView: Container(
+        padding: EdgeInsets.symmetric(horizontal: 400),
+        child: AIVoiceInterViewScreen(),
+      ),
+    );
+  }
+}
 
 class AIVoiceInterViewScreen extends StatefulWidget {
   const AIVoiceInterViewScreen({super.key});

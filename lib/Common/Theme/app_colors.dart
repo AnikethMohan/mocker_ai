@@ -9,6 +9,7 @@ class AppColors {
   static const Color sucessSnakColor = Color(0xff109310);
   static const Color checkGreen = Color(0xff4FC65F);
   static const Color lightGrey = Color(0xffF9FAFB);
+  static const Color brown = Color(0xffd88621);
 
   static const Color appBlue = Color(0xff2D5CF3);
 

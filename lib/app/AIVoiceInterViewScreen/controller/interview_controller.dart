@@ -37,6 +37,10 @@ class InterviewController extends GetxController {
   final ResumeController _resumeController = Get.find<ResumeController>();
   final InterviewMemory memory = InterviewMemory();
   var isInterViewFinished = false.obs;
+
+  var interviewAnalysisStatus = RxStatus.empty().obs;
+  var interviewAnalysis = InterviewAnalysis().obs;
+
   ScrollController scrollController = ScrollController();
 
   @override
@@ -51,6 +55,13 @@ class InterviewController extends GetxController {
 
   Future<void> _initTts() async {
     await flutterTts.awaitSpeakCompletion(true);
+    await flutterTts
+        .setIosAudioCategory(IosTextToSpeechAudioCategory.playback, [
+          IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+          IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker,
+        ], IosTextToSpeechAudioMode.defaultMode);
   }
 
   Future<void> _initStt() async {
@@ -245,6 +256,113 @@ class InterviewController extends GetxController {
     final json = jsonDecode(response.text!);
     log('$json');
     return InterviewResponse.fromJson(json);
+  }
+
+  Future<void> analyzeInterview() async {
+    interviewAnalysisStatus.value = RxStatus.loading();
+    final analysisSchema = Schema.object(
+      properties: {
+        'overAllPerformance': Schema.number(
+          description:
+              "Score from 0 to 100 indicating how the overall performance of the candidate was in the interview.",
+        ),
+        'clarity': Schema.number(
+          description:
+              "Score from 0 to 100 indicating how clear and understandable the candidate's answers were.",
+        ),
+        'depth': Schema.number(
+          description:
+              "Score from 0 to 100 indicating how detailed and thoughtful the answers were.",
+        ),
+        'structure': Schema.number(
+          description:
+              "Score from 0 to 100 indicating how well-structured and organized the answers were.",
+        ),
+        'keyStrengths': Schema.array(
+          items: Schema.string(),
+          description:
+              "Key strengths demonstrated by the candidate during the interview.",
+        ),
+        'areasToImprove': Schema.array(
+          items: Schema.string(),
+          description:
+              "Specific areas where the candidate can improve their interview responses.",
+        ),
+        'numberOfQuestionsAnswered': Schema.integer(
+          description:
+              "Total number of interview questions answered by the user.",
+        ),
+        'averageResponseLength': Schema.number(
+          description: "Average length of user responses measured in words.",
+        ),
+        'completionRate': Schema.number(
+          description:
+              "Interview completion rate between 0 and 1 based on how fully the interview was completed.",
+        ),
+      },
+      optionalProperties: [
+        'overAllPerformance'
+            'clarity',
+        'depth',
+        'structure',
+        'keyStrengths',
+        'areasToImprove',
+        'numberOfQuestionsAnswered',
+        'averageResponseLength',
+        'completionRate',
+      ],
+    );
+    try {
+      final model = FirebaseAI.googleAI().generativeModel(
+        model: GeminiModels.gem25Flash,
+        generationConfig: GenerationConfig(
+          responseMimeType: 'application/json',
+          responseSchema: analysisSchema,
+        ),
+      );
+      final prompt = [
+        Content.text('''
+You are an expert interview evaluator.
+
+Resume Details:
+${jsonEncode(_resumeController.resumeResultData.value!.toJson())}
+
+Job Description:
+${jsonEncode(_resumeController.jobAnalysisResultData.value?.toJson())}
+
+Interview Memory (JSON):
+${jsonEncode(memory.toJson())}
+
+Conversation History:
+${conversationHistory.join('\n')}
+
+Your task:
+- Analyze the candidate's interview performance holistically.
+- Score clarity, depth, and structure from 0 to 100.
+- Idtienfy clearconcr strengths and ete improvement areas.
+- Count how many questions were answered.
+- Calculate the average response length in words.
+- Estimate interview completion rate:
+  - 1.0 = interview fully completed
+  - 0.7–0.9 = mostly completed
+  - <0.7 = ended early or weak engagement
+
+Rules:
+- Be fair, objective, and constructive.
+- Do NOT hallucinate experiences not present in the answers.
+- Output ONLY valid JSON matching the schema.
+'''),
+      ];
+
+      final response = await model.generateContent(prompt);
+      final json = jsonDecode(response.text!);
+      log('Interview Analysis: $json');
+
+      interviewAnalysis.value = InterviewAnalysis.fromJson(json);
+      interviewAnalysisStatus.value = RxStatus.success();
+    } catch (e) {
+      interviewAnalysisStatus.value = RxStatus.error(e.toString());
+    }
   }
 
   void interviewFinshed() {

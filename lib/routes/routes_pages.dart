@@ -20,7 +20,7 @@ final appRouter = GoRouter(
       path: RoutesName.aiVoiceInterview,
       builder: (context, state) {
         Get.lazyPut(() => InterviewController());
-        return const AIVoiceInterViewScreen();
+        return const AiVoiceInterviewView();
       },
     ),
     GoRoute(
